@@ -6,7 +6,7 @@ document.getElementById('signinForm').addEventListener('submit', async function 
     const errorMessageElement = document.getElementById('error-message');
 
     try {
-        const response = await fetch('http://localhost:3000/api/signin', {
+        const response = await fetch('https://node-and-socket-project.onrender.com/api/signin', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -16,7 +16,7 @@ document.getElementById('signinForm').addEventListener('submit', async function 
         console.log({ username, password })
         console.log(response)
         if (response.ok) {
-            const response = await fetch('http://localhost:3000/chatroom').then(() => {
+            const response = await fetch('https://node-and-socket-project.onrender.com/chatroom').then(() => {
                 window.location.href = 'http://localhost:3000/chatroom';
                 console.log(username)
                 localStorage.setItem('username', username);

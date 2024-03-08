@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <title>Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #messages {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #messages li {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        #form {
+            display: flex;
+        }
+
+        #input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        h4,
+        li {
+            margin: 0;
+            /* Reset margin to zero */
+            padding: 0;
+            /* Reset padding to zero */
+        }
+
+        h4 {
+            margin-bottom: 5px;
+            /* Set bottom margin for h4 */
+        }
+
+        .my-message {
+            text-align: right;
+            margin-bottom: 5px;
+        }
+
+        .other-message {
+            text-align: left;
+            margin-bottom: 5px;
+        }
+        .modalForData{
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Chat Room</h1>
+        <ul id="messages"></ul>
+        <form id="form" action="">
+            <input id="input" autocomplete="off" placeholder="Type your message..." />
+            <button>Send</button>
+        </form>
+
+        <div class="modal fade modalForData" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">User Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        var socket = io();
+        var form = document.getElementById('form');
+        var input = document.getElementById('input');
+        var messages = document.getElementById('messages');
+        socket.on('username', function (username) {
+            var usernameItem = document.createElement('li');
+            usernameItem.textContent = "You are connected as: " + username;
+            messages.appendChild(usernameItem);
+        });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('chat message', input.value);
+                input.value = '';
+            }
+        });
+        var myName;
+
+        socket.on('chat message', function (msg) {
+
+            var container = document.createElement('div');
+            var heading = document.createElement('h4');
+            var item = document.createElement('li');
+
+            // console.log(msg);
+            if (msg.from === myName) {
+                container.classList.add('my-message');
+            } else {
+                container.classList.add('other-message');
+            }
+
+            // Set the text content of the heading
+            heading.textContent = msg.from === myName ? 'me' : msg.from;
+            item.textContent = msg.msg;
+            container.appendChild(heading);
+            container.appendChild(item);
+            messages.appendChild(container);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        socket.on('Welcome', function (msg) {
+            // console.log("Welcome to", msg)
+        });
+
+
+    socket.on('UserDetails', function (userDetails) {
+    // Corrected the variable name and added missing bootstrap modal instantiation
+    var myModal = new bootstrap.Modal(document.getElementById('exampleModal'));
+    // Corrected the selection to use querySelector to get the first element with the class "modal-body"
+    document.querySelector('.modal-body').innerHTML = `
+        <p>Name: ${userDetails.firstName} ${userDetails.lastName}</p>
+        <p>Mobile Number: ${userDetails.mobileNumber}</p>
+        <p>Email ID: ${userDetails.emailId}</p>
+        <p>Address: ${userDetails.street} ${userDetails.city} ${userDetails.state}, ${userDetails.country}</p>`;
+    $('#exampleModal').modal('show'); // Show the modal
+});
+
+
+        socket.on('socketConnected', function (msg) {
+            // console.log("my", msg)
+            myName = msg;
+            messages.addEventListener('click', function (event) {
+                if (event.target.tagName === 'H4' && event.target.textContent !== "me") {
+                    socket.emit('UserDetails', event.target.textContent)
+                    // console.log("Username:", event.target.textContent);
+                }
+            })
+        });
+
+    </script>
+</body>
+
+</html>
